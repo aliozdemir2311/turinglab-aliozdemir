@@ -1,0 +1,22 @@
+name: "divisible_by_4"
+start_state: "q0"
+accept_states: ["q_accept"]
+reject_states: ["q_reject"]
+blank: "B"
+input_alphabet: ["0", "1"]
+tape_alphabet: ["0", "1", "B"]
+transitions:
+  # 1. En sağa, yani sayının bittiği boşluğa (B) kadar ilerle
+  - { state: "q0", read: "0", next: "q0", write: "0", move: "R" }
+  - { state: "q0", read: "1", next: "q0", write: "1", move: "R" }
+  - { state: "q0", read: "B", next: "q_check_last", write: "B", move: "L" }
+
+  # 2. Son basamağı kontrol et (Bölünmesi için mutlaka 0 olmalı)
+  - { state: "q_check_last", read: "0", next: "q_check_second_last", write: "0", move: "L" }
+  - { state: "q_check_last", read: "1", next: "q_reject", write: "1", move: "L" }
+  - { state: "q_check_last", read: "B", next: "q_reject", write: "B", move: "L" } # Boş girdi durumu
+
+  # 3. Sondan bir önceki basamağı kontrol et
+  - { state: "q_check_second_last", read: "0", next: "q_accept", write: "0", move: "L" } # Sonu "00" bitti -> KABUL! (Örn: 4, 8, 12)
+  - { state: "q_check_second_last", read: "B", next: "q_accept", write: "B", move: "R" } # Girdi sadece "0" ise 4'e bölünür -> KABUL!
+  - { state: "q_check_second_last", read: "1", next: "q_reject", write: "1", move: "L" } # Sonu "10" bitti (Örn: 2, 6, 10) -> RET!
