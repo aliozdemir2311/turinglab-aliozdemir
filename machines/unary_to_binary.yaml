@@ -1,0 +1,69 @@
+name: "unary_to_binary"
+start_state: "q0"
+accept_states: ["q_accept"]
+reject_states: ["q_reject"]
+blank: "B"
+input_alphabet: ["1"]
+tape_alphabet: ["1", "0", "B", "X"]
+transitions:
+  # AŞAMA 1: Unary sayiyi (1'leri) teker teker X yapip sagda ters binary sayacini artirma
+  - { state: "q0", read: "1", next: "q_find_sep", write: "X", move: "R" }
+  - { state: "q0", read: "X", next: "q0", write: "X", move: "R" }
+  - { state: "q0", read: "B", next: "q_clean_unary", write: "B", move: "L" }
+  
+  - { state: "q_find_sep", read: "1", next: "q_find_sep", write: "1", move: "R" }
+  - { state: "q_find_sep", read: "0", next: "q_find_sep", write: "0", move: "R" }
+  - { state: "q_find_sep", read: "X", next: "q_find_sep", write: "X", move: "R" }
+  - { state: "q_find_sep", read: "B", next: "q_inc", write: "B", move: "R" }
+  
+  - { state: "q_inc", read: "B", next: "q_return", write: "1", move: "L" }
+  - { state: "q_inc", read: "0", next: "q_return", write: "1", move: "L" }
+  - { state: "q_inc", read: "1", next: "q_inc", write: "0", move: "R" }
+  
+  - { state: "q_return", read: "0", next: "q_return", write: "0", move: "L" }
+  - { state: "q_return", read: "1", next: "q_return", write: "1", move: "L" }
+  - { state: "q_return", read: "B", next: "q_return_X", write: "B", move: "L" }
+  
+  - { state: "q_return_X", read: "X", next: "q_return_X", write: "X", move: "L" }
+  - { state: "q_return_X", read: "1", next: "q_return_X", write: "1", move: "L" }
+  - { state: "q_return_X", read: "B", next: "q0", write: "B", move: "R" }
+
+  # AŞAMA 2: Unary kisimdan kalan X isaretlerini temizleme
+  - { state: "q_clean_unary", read: "X", next: "q_clean_unary", write: "B", move: "L" }
+  - { state: "q_clean_unary", read: "B", next: "q_go_to_bin", write: "B", move: "R" }
+  
+  - { state: "q_go_to_bin", read: "B", next: "q_go_to_bin", write: "B", move: "R" }
+  - { state: "q_go_to_bin", read: "0", next: "q_mark_start", write: "0", move: "L" }
+  - { state: "q_go_to_bin", read: "1", next: "q_mark_start", write: "1", move: "L" }
+  
+  - { state: "q_mark_start", read: "B", next: "q_rev_read", write: "X", move: "R" }
+
+  # AŞAMA 3: Ters olusan Binary sayiyi duzeltme (Tersini alma)
+  - { state: "q_rev_read", read: "0", next: "q_rev_carry_0", write: "X", move: "L" }
+  - { state: "q_rev_read", read: "1", next: "q_rev_carry_1", write: "X", move: "L" }
+  - { state: "q_rev_read", read: "B", next: "q_rev_done", write: "B", move: "L" }
+  
+  - { state: "q_rev_carry_0", read: "X", next: "q_rev_carry_0", write: "X", move: "L" }
+  - { state: "q_rev_carry_0", read: "0", next: "q_rev_carry_0", write: "0", move: "L" }
+  - { state: "q_rev_carry_0", read: "1", next: "q_rev_carry_0", write: "1", move: "L" }
+  - { state: "q_rev_carry_0", read: "B", next: "q_rev_return", write: "0", move: "R" }
+  
+  - { state: "q_rev_carry_1", read: "X", next: "q_rev_carry_1", write: "X", move: "L" }
+  - { state: "q_rev_carry_1", read: "0", next: "q_rev_carry_1", write: "0", move: "L" }
+  - { state: "q_rev_carry_1", read: "1", next: "q_rev_carry_1", write: "1", move: "L" }
+  - { state: "q_rev_carry_1", read: "B", next: "q_rev_return", write: "1", move: "R" }
+  
+  - { state: "q_rev_return", read: "0", next: "q_rev_return", write: "0", move: "R" }
+  - { state: "q_rev_return", read: "1", next: "q_rev_return", write: "1", move: "R" }
+  - { state: "q_rev_return", read: "X", next: "q_rev_return_X", write: "X", move: "R" }
+  
+  - { state: "q_rev_return_X", read: "X", next: "q_rev_return_X", write: "X", move: "R" }
+  - { state: "q_rev_return_X", read: "0", next: "q_rev_carry_0", write: "X", move: "L" }
+  - { state: "q_rev_return_X", read: "1", next: "q_rev_carry_1", write: "X", move: "L" }
+  - { state: "q_rev_return_X", read: "B", next: "q_rev_done", write: "B", move: "L" }
+  
+  # AŞAMA 4: Son temizlik ve bitis
+  - { state: "q_rev_done", read: "X", next: "q_rev_done", write: "B", move: "L" }
+  - { state: "q_rev_done", read: "0", next: "q_accept", write: "0", move: "R" }
+  - { state: "q_rev_done", read: "1", next: "q_accept", write: "1", move: "R" }
+  - { state: "q_rev_done", read: "B", next: "q_accept", write: "B", move: "R" }
