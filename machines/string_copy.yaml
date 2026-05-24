@@ -1,0 +1,48 @@
+name: "string_copy"
+start_state: "q_init"
+accept_states: ["q_accept"]
+reject_states: ["q_reject"]
+blank: "B"
+input_alphabet: ["a", "b"]
+tape_alphabet: ["a", "b", "B", "#", "A", "B'"]
+transitions:
+  # --- 1. AŞAMA: DİZGİNİN SONUNA '#' EKLEME ---
+  - { state: "q_init", read: "a", next: "q_init", write: "a", move: "R" }
+  - { state: "q_init", read: "b", next: "q_init", write: "b", move: "R" }
+  - { state: "q_init", read: "B", next: "q_go_start", write: "#", move: "L" }
+
+  # En sola (başlangıca) geri dön
+  - { state: "q_go_start", read: "a", next: "q_go_start", write: "a", move: "L" }
+  - { state: "q_go_start", read: "b", next: "q_go_start", write: "b", move: "L" }
+  - { state: "q_go_start", read: "B", next: "q0", write: "B", move: "R" }
+
+  # --- 2. AŞAMA: KARAKTER KARAKTER KOPYALAMA ---
+  # İlk işaretlenmemiş karakteri oku ve işaretle (A veya B' yap)
+  - { state: "q0", read: "a", next: "q_copy_a", write: "A", move: "R" }
+  - { state: "q0", read: "b", next: "q_copy_b", write: "B'", move: "R" }
+  - { state: "q0", read: "#", next: "q_clean", write: "#", move: "L" } # Orijinal dizgi bitti, temizliğe geç
+
+  # 'a' harfini şeridin en sonundaki boşluğa (B) kopyalamak için sağa git
+  - { state: "q_copy_a", read: "a", next: "q_copy_a", write: "a", move: "R" }
+  - { state: "q_copy_a", read: "b", next: "q_copy_a", write: "b", move: "R" }
+  - { state: "q_copy_a", read: "#", next: "q_copy_a", write: "#", move: "R" }
+  - { state: "q_copy_a", read: "B", next: "q_return", write: "a", move: "L" }
+
+  # 'b' harfini şeridin en sonundaki boşluğa (B) kopyalamak için sağa git
+  - { state: "q_copy_b", read: "a", next: "q_copy_b", write: "a", move: "R" }
+  - { state: "q_copy_b", read: "b", next: "q_copy_b", write: "b", move: "R" }
+  - { state: "q_copy_b", read: "#", next: "q_copy_b", write: "#", move: "R" }
+  - { state: "q_copy_b", read: "B", next: "q_return", write: "b", move: "L" }
+
+  # Bir sonraki karakter için sola, eski kaldığımız yere dön
+  - { state: "q_return", read: "a", next: "q_return", write: "a", move: "L" }
+  - { state: "q_return", read: "b", next: "q_return", write: "b", move: "L" }
+  - { state: "q_return", read: "#", next: "q_return", write: "#", move: "L" }
+  - { state: "q_return", read: "A", next: "q0", write: "A", move: "R" }
+  - { state: "q_return", read: "B'", next: "q0", write: "B'", move: "R" }
+
+  # --- 3. AŞAMA: İŞARETLERİ TEMİZLEME VE ORİJİNAL HALE GETİRME ---
+  # Büyük A'ları küçük a, B'leri küçük b yapıp eski haline döndür
+  - { state: "q_clean", read: "A", next: "q_clean", write: "a", move: "L" }
+  - { state: "q_clean", read: "B'", next: "q_clean", write: "b", move: "L" }
+  - { state: "q_clean", read: "B", next: "q_accept", write: "B", move: "R" }
