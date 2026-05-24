@@ -1,0 +1,46 @@
+name: "binary_compare"
+start_state: "q0"
+accept_states: ["q_accept"]
+reject_states: ["q_reject"]
+blank: "B"
+input_alphabet: ["0", "1", "#"]
+tape_alphabet: ["0", "1", "#", "X", "B"]
+transitions:
+  # 1. İlk sayidan bir rakam oku ve isaretle (X yap)
+  - { state: "q0", read: "0", next: "q_find_0", write: "X", move: "R" }
+  - { state: "q0", read: "1", next: "q_find_1", write: "X", move: "R" }
+  - { state: "q0", read: "#", next: "q_check_done", write: "#", move: "R" } # Ilk sayi bittiyse kontrole gec
+  
+  # 2. Okunan rakam '0' ise, # isaretine kadar saga git
+  - { state: "q_find_0", read: "0", next: "q_find_0", write: "0", move: "R" }
+  - { state: "q_find_0", read: "1", next: "q_find_0", write: "1", move: "R" }
+  - { state: "q_find_0", read: "#", next: "q_match_0", write: "#", move: "R" }
+  
+  # 3. Okunan rakam '1' ise, # isaretine kadar saga git
+  - { state: "q_find_1", read: "0", next: "q_find_1", write: "0", move: "R" }
+  - { state: "q_find_1", read: "1", next: "q_find_1", write: "1", move: "R" }
+  - { state: "q_find_1", read: "#", next: "q_match_1", write: "#", move: "R" }
+  
+  # 4. Ikinci sayinin uzerindeki isaretlenmis (X) kisimlari atla
+  - { state: "q_match_0", read: "X", next: "q_match_0", write: "X", move: "R" }
+  - { state: "q_match_1", read: "X", next: "q_match_1", write: "X", move: "R" }
+  
+  # 5. Ikinci sayida ilk isaretlenmemis rakami kontrol et, eslesiyorsa isaretle
+  - { state: "q_match_0", read: "0", next: "q_return", write: "X", move: "L" }
+  - { state: "q_match_1", read: "1", next: "q_return", write: "X", move: "L" }
+  # (Eslesmiyorsa makine otomatik reddeder)
+  
+  # 6. Eslesme basarili! Sola dogru don ve ilk sayinin kaldigi yeri bul
+  - { state: "q_return", read: "X", next: "q_return", write: "X", move: "L" }
+  - { state: "q_return", read: "0", next: "q_return", write: "0", move: "L" }
+  - { state: "q_return", read: "1", next: "q_return", write: "1", move: "L" }
+  - { state: "q_return", read: "#", next: "q_return_first", write: "#", move: "L" }
+  
+  - { state: "q_return_first", read: "0", next: "q_return_first", write: "0", move: "L" }
+  - { state: "q_return_first", read: "1", next: "q_return_first", write: "1", move: "L" }
+  - { state: "q_return_first", read: "X", next: "q0", write: "X", move: "R" }
+  - { state: "q_return_first", read: "B", next: "q0", write: "B", move: "R" }
+  
+  # 7. Ilk sayi tamamen bittiginde, ikinci sayida artan bir rakam kalmis mi kontrol et
+  - { state: "q_check_done", read: "X", next: "q_check_done", write: "X", move: "R" }
+  - { state: "q_check_done", read: "B", next: "q_accept", write: "B", move: "L" } # İkisi de esit, Kabul!
